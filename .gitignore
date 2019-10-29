@@ -1,0 +1,12 @@
+__pycache__/
+logs/
+.idea/
+20191017_aggr_true_activation_067/
+20191017_aggr_true_activation_075/
+20191017_aggr_true_activation_auto/
+to_validation/
+vad_tokens/
+cashier_data/
+gpn_prod_check/
+tmp/
+temp/
