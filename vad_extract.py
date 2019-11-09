@@ -91,7 +91,7 @@ class CNNNetVAD:
 
         return np.lib.stride_tricks.as_strided(x[0:n_keep,:], (n_frames,n_frame), strides)
 
-    def extract_voice(self, file):
+    def extract_voice(self, file, voice_out_path='', noise_out_path=''):
         if not os.path.isfile(file):
             self.logger.error(f'Skip: [{file}] not found]')
             raise FileNotFoundError
@@ -144,9 +144,12 @@ class CNNNetVAD:
                 sess.close()
                 graph.finalize()
                 # graph.clear_collection()
-                # noise = input[np.argwhere(labels==0),:].reshape(-1,1)
-                # speech = input[np.argwhere(labels==1),:].reshape(-1,1)
-                # self.__audio_to_file('/home/gpn/vadnet/res/out.speech.wav', speech, sr)
-                # self.__audio_to_file('/home/gpn/vadnet/res/out.noise.wav', noise, sr)
+
+                if len(noise_out_path) > 0:
+                    noise = input[np.argwhere(labels==0),:].reshape(-1,1)
+                    self.__audio_to_file(noise_out_path, noise, sr)
+                if len(voice_out_path) > 0:
+                    speech = input[np.argwhere(labels==1),:].reshape(-1,1)
+                    self.__audio_to_file(voice_out_path, speech, sr)
 
         return labels

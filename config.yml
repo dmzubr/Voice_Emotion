@@ -1,9 +1,23 @@
+amqp:
+  host: casheee.ru
+  exchange_name: easy_net_q_rpc
+  user_name: detector
+  password: detector
+
+ya_cloud_storage:
+  bucket_name: dev-test
+  aws_access_key_id: VKN063Z_IBHtSlHd5YKi
+  aws_secret_access_key: IudVkM8tPyQ36dfPm3d7DDhNBYExs2Ba5zztA6KX
+
 transcriber_config:
   backend_root: https://cashee.ru:447/api
   user: support
   password: 8364Veakjybot@69$1
 
-vad_model_path: vad_models/vad/model.ckpt-200106
-#aggression_cnn_model_path: aggr_models/agression_cnn_model.h5
-aggression_cnn_model_path: aggr_models/20191017_my_weights_v1.h5
-aggression_activation_threshold: 0.67
+vad:
+  model_path: vad_models/vad/model.ckpt-200106
+  batch_size: 256
+
+aggression_cnn:
+  cnn_model_path: aggr_models/20191017_my_weights_v1.h5
+  aggression_activation_threshold: 0.67
