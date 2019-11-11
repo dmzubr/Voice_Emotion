@@ -118,7 +118,7 @@ class AggressionAssessorService:
 
         while chunk_end < segm_obj.duration_seconds * 1000 \
                 and (chunk_end - chunk_start) / 1000 < chunk_length  * 1000:
-            self.__logger.debug(f'Chunk from {chunk_start} to {chunk_end}')
+            self.__logger.debug(f'Chunk from {chunk_start} to {chunk_end}. Assess for aggression threshold {aggr_threshold}')
             chunk_obj = segm_obj[chunk_start:chunk_end]
             chunk_file_name = file_name + '_voice' + f'_part_{chunk_iter}.wav'
             chunk_path = os.path.join(self.WORK_DIR, chunk_file_name)

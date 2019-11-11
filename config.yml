@@ -1,5 +1,5 @@
 amqp:
-  host: casheee.ru
+  host: cashee.ru
   exchange_name: easy_net_q_rpc
   user_name: detector
   password: detector
@@ -20,4 +20,4 @@ vad:
 
 aggression_cnn:
   cnn_model_path: aggr_models/20191017_my_weights_v1.h5
-  aggression_activation_threshold: 0.67
+  aggression_activation_threshold: 0.55

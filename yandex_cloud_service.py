@@ -1,10 +1,3 @@
-from segan.models import *
-from segan.datasets import *
-import soundfile as sf
-from scipy.io import wavfile
-import json
-import os
-
 import boto3
 
 

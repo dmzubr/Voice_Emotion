@@ -51,7 +51,7 @@ class CNNAgressionAnalyzer:
     def check_is_file_aggressive(self, file_path, activation_line=0.5):
         prediction = self.__get_file_prediction(file_path)
 
-        # if prediction[1] > prediction[0]:
+        self.__logger.info(f'Aggression value is {prediction[1]}')
         if prediction[1] >= activation_line:
             return True
 

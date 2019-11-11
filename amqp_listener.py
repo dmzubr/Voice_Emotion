@@ -58,7 +58,7 @@ class AssesAggressionAMQPService:
         self.__channel = None
         self.__in_queue_name = 'Loyalty.Audio.EmotionsAssesorService.Logic.Messages.AssesAggressionRequest, Loyalty.Audio.EmotionsAssesorService.Logic'
         self.__exchange_name = config['amqp']['exchange_name']  # 'easy_net_q_rpc'
-        self.__amqp_host = config['amqp']['amqp_host']
+        self.__amqp_host = config['amqp']['host']
         self.__user_name = config['amqp']['user_name']
         self.__password = config['amqp']['password']
         self.__aggr_threshold = config['aggression_cnn']['aggression_activation_threshold']
@@ -120,7 +120,7 @@ class AssesAggressionAMQPService:
             aggression_seconds_stamps = []
             self.__logger.debug(f'Got {len(aggressive_chunks)} aggressive chunks')
             for aggressive_chunk in aggressive_chunks:
-                aggression_seconds_stamps.append((aggressive_chunk['from'], aggressive_chunk['to']))
+                aggression_seconds_stamps.append({'From': aggressive_chunk['from'], 'To': aggressive_chunk['to']})
                 if save_aggr_chunks_to_cloud:
                     # Save file to cloud
                     chunk_path = aggressive_chunk['path']
@@ -164,6 +164,7 @@ class AssesAggressionAMQPService:
             save_res_chunks_to_cloud = str(req['SaveChunksToCloud']).lower() == 'true'
             res_obj = self.__assess_aggression(file_urls_list=req['FileUrlsList'],
                                                file_local_paths_list=req['FilePathsList'],
+                                               chunk_length=float(req['ChunkLength']),
                                                save_aggr_chunks_to_cloud=save_res_chunks_to_cloud)
             self.__push_message(header_frame.reply_to, header_frame.correlation_id, res_obj)
         except Exception as exc:
@@ -174,7 +175,7 @@ class AssesAggressionAMQPService:
     def __push_message(self, reply_to_key, correlation_id, res_obj):
         res = res_obj
         body = json.dumps(res)
-        msg_type = 'Loyalty.Audio.DenoiserSegan.SeganDenoisingResponse, Loyalty.Audio.DenoiserSegan'
+        msg_type = 'Loyalty.Audio.EmotionsAssesorService.Logic.Messages.AssesAggressionResponse, Loyalty.Audio.EmotionsAssesorService.Logic'
         props = pika.BasicProperties(correlation_id=correlation_id, type=msg_type)
         self.__logger.debug(f'Publish message to queue {reply_to_key}. Body: {body}')
         self.__channel.basic_publish(exchange=self.__exchange_name, routing_key=reply_to_key, body=body, properties=props)

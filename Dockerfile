@@ -8,7 +8,7 @@
 FROM tensorflow/tensorflow:latest-gpu-py3
 
 RUN apt update && apt install -y libsndfile1 ffmpeg sox libsox-fmt-all
-RUN pip install pandas librosa tqdm keras seaborn watchdog pyyaml requests pydub
+RUN pip install pandas librosa tqdm keras seaborn watchdog pyyaml requests pydub pika boto3
 
 RUN mkdir /root/app
 COPY . /root/app
