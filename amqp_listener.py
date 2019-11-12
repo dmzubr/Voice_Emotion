@@ -110,22 +110,28 @@ class AssesAggressionAMQPService:
                 upload_and_save_file(file_url, initial_file_path)
                 self.__logger.debug(f'SUCCESS: Initial file saved to {initial_file_path}')
 
+            temp_files.append(initial_file_path)
+
             # Not need to convert file to WAV extension
             # Converting is performed in aggression assessment service itself
-            aggressive_chunks = self.__aggression_assessor_service.assess_aggression(file_path=initial_file_path,
-                                                                                     aggr_threshold=self.__aggr_threshold,
-                                                                                     chunk_length=chunk_length,
-                                                                                     use_local_vad=True)
-            aggressive_chunks_urls_list = []
-            aggression_seconds_stamps = []
-            self.__logger.debug(f'Got {len(aggressive_chunks)} aggressive chunks')
-            for aggressive_chunk in aggressive_chunks:
-                aggression_seconds_stamps.append({'From': aggressive_chunk['from'], 'To': aggressive_chunk['to']})
-                if save_aggr_chunks_to_cloud:
-                    # Save file to cloud
-                    chunk_path = aggressive_chunk['path']
-                    temp_files.append(chunk_path)
-                    if '.wav' in aggressive_chunk['path']:
+            chunks = self.__aggression_assessor_service.assess_aggression(file_path=initial_file_path,
+                                                                          aggr_threshold=self.__aggr_threshold,
+                                                                          chunk_length=chunk_length,
+                                                                          use_local_vad=True)
+
+            # Array of chunk models in format of object that's returned by service
+            out_chunks_list = []
+            for chunk in chunks:
+                chunk_out_def = {
+                    'From': chunk['from'],
+                    'To': chunk['to'],
+                    'AggressionLevel': float(chunk['aggression_level'])
+                }
+                chunk_path = chunk['path']
+                temp_files.append(chunk_path)
+                if save_aggr_chunks_to_cloud and chunk['aggression_level'] >= self.__aggr_threshold:
+                    # Save file to cloud (only if file decided as aggressive)
+                    if '.wav' in chunk['path']:
                         # Resave file in mp3 format before save to cloud (to optimize storage size)
                         self.__logger.debug(f"Convert chunk to MP3 format to optimize storage space")
                         chunk_obj = AudioSegment.from_wav(chunk_path)
@@ -133,22 +139,29 @@ class AssesAggressionAMQPService:
                         chunk_obj.export(chunk_path, format='mp3')
                         assert os.path.exists(chunk_path)
                         temp_files.append(chunk_path)
-                        self.__logger.debug(f"Chunk MP3 file p[ath is {chunk_path}")
+                        self.__logger.debug(f"Chunk MP3 file path is {chunk_path}")
 
                     self.__logger.debug(f"Save file {chunk_path} to cloud")
                     chunk_file_name = get_file_name_from_path(chunk_path)
                     chunk_url = self.__cloud_storage.save_object_to_storage(file_to_save=chunk_path,
                                                                             save_file_name=chunk_file_name)
+                    chunk_out_def['SavedUrl'] = chunk_url
                     self.__logger.debug(f"Saved chunk url is {chunk_url}")
-                    aggressive_chunks_urls_list.append(chunk_url)
+
+                temp_files.append(chunk_path)
+                out_chunks_list.append(chunk_out_def)
+
             res_item = {
                 'SrcFileUrl': file_url,
                 'SrcFilePath': initial_file_path,
-                'SavedAggressiveChunkUrl': aggressive_chunks_urls_list,
-                'AggressionParts': aggression_seconds_stamps
+                'AggressiveChunks': out_chunks_list
             }
 
             res_list.append(res_item)
+
+        for temp_file_path in temp_files:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
         res = {}
         res['Files'] = res_list

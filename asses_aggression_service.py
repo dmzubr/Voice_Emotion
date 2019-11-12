@@ -125,21 +125,20 @@ class AggressionAssessorService:
             chunk_obj.export(chunk_path, format='wav')
             assert os.path.isfile(chunk_path)
 
-            is_aggressive_chunk = self.cnn_agression_analyzer.check_is_file_aggressive(chunk_path, aggr_threshold)
-            self.__logger.debug(f'Chunk {chunk_path} is aggressive: {is_aggressive_chunk}')
+            chunk_aggression_level = self.cnn_agression_analyzer.get_aggression(chunk_path)
+            self.__logger.debug(f'Chunk {chunk_path} aggression is: {chunk_aggression_level}')
             chunk_descrpition = {
                 'from': chunk_start / 1000,
                 'to': chunk_end / 1000,
-                'path': chunk_path.replace('\\', '/')
+                'path': chunk_path.replace('\\', '/'),
+                'aggression_level': chunk_aggression_level
             }
+            res.append(chunk_descrpition)
 
-            if is_aggressive_chunk:
-                self.__logger.info(f'Add aggressive chunk to response: chunk: {chunk_descrpition}')
-                res.append(chunk_descrpition)
-            else:
-                self.__tmp_files.append(chunk_path)
+            if chunk_aggression_level < aggr_threshold:
                 USE_TRANSCRIBE = False
                 if USE_TRANSCRIBE:
+                    self.__tmp_files.append(chunk_path)
                     chunk_path_to_transcribe = chunk_path.replace('.wav', '') + '_to_transcribe.mp3'
                     chunk_obj.export(chunk_path_to_transcribe, format='mp3')
                     self.__logger.info(f'TRY: Call transcribe service for file {chunk_path_to_transcribe}')

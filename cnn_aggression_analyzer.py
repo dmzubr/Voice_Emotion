@@ -57,6 +57,11 @@ class CNNAgressionAnalyzer:
 
         return False
 
+    def get_aggression(self, file_path):
+        prediction = self.__get_file_prediction(file_path)
+        self.__logger.info(f'Aggression value is {prediction[1]}')
+        return prediction[1]
+
     def get_aggressive_prediction_level(self, file_path):
         prediction = self.__get_file_prediction(file_path)
         return prediction[1]
