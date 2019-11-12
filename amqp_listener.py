@@ -114,10 +114,11 @@ class AssesAggressionAMQPService:
 
             # Not need to convert file to WAV extension
             # Converting is performed in aggression assessment service itself
-            chunks = self.__aggression_assessor_service.assess_aggression(file_path=initial_file_path,
+            assessment_res = self.__aggression_assessor_service.assess_aggression(file_path=initial_file_path,
                                                                           aggr_threshold=self.__aggr_threshold,
                                                                           chunk_length=chunk_length,
                                                                           use_local_vad=True)
+            chunks = assessment_res['chunks']
 
             # Array of chunk models in format of object that's returned by service
             out_chunks_list = []
@@ -154,7 +155,8 @@ class AssesAggressionAMQPService:
             res_item = {
                 'SrcFileUrl': file_url,
                 'SrcFilePath': initial_file_path,
-                'AggressiveChunks': out_chunks_list
+                'SrcFileDurationSeconds': assessment_res['initial_file_duration'],
+                'Chunks': out_chunks_list,
             }
 
             res_list.append(res_item)

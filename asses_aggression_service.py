@@ -91,6 +91,7 @@ class AggressionAssessorService:
             segm_obj = AudioSegment.from_mp3(file_path)
 
         segm_obj.set_channels(1)
+        initial_file_duration = segm_obj.duration_seconds
 
         if use_local_vad:
             self.__logger.info(f'Convert file to VAD service compatible format (Frame rate={self.VAD_FILE_FRAME_RATE})')
@@ -116,8 +117,10 @@ class AggressionAssessorService:
         if chunk_end > segm_obj.duration_seconds * 1000:
             chunk_end = segm_obj.duration_seconds * 1000
 
-        while chunk_end < segm_obj.duration_seconds * 1000 \
-                and (chunk_end - chunk_start) / 1000 < chunk_length  * 1000:
+        while chunk_end <= segm_obj.duration_seconds * 1000:
+            if (chunk_end - chunk_start) < 1000:
+                break
+
             self.__logger.debug(f'Chunk from {chunk_start} to {chunk_end}. Assess for aggression threshold {aggr_threshold}')
             chunk_obj = segm_obj[chunk_start:chunk_end]
             chunk_file_name = file_name + '_voice' + f'_part_{chunk_iter}.wav'
@@ -154,9 +157,11 @@ class AggressionAssessorService:
 
             chunk_start = chunk_end
             chunk_end += chunk_length * 1000
+            if chunk_end > segm_obj.duration_seconds * 1000:
+                chunk_end = segm_obj.duration_seconds * 1000
             chunk_iter += 1
 
         for tmp_file in self.__tmp_files:
             os.remove(tmp_file)
 
-        return res
+        return {'chunks': res, 'initial_file_duration': initial_file_duration}
