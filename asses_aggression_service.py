@@ -111,7 +111,7 @@ class AggressionAssessorService:
             voice_wav_file_path = os.path.join(self.WORK_DIR, voice_fle_name)
 
             vad_response = self.vad.extract_voice(vad_full_path, voice_out_path=voice_wav_file_path)
-            self.__logger.debug(f'Vad CNN response is {vad_response}')
+            self.__logger.info(f'Vad CNN response is {vad_response}')
             voiced_samples = [x for x in vad_response if x]
             if len(voiced_samples) == 0:
                 self.__logger.warning(f'No voiced samples found. Stopping processing')
