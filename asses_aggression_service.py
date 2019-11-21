@@ -71,6 +71,11 @@ class AggressionAssessorService:
         self.bad_words_checker = WordsComparator(bad_words_file_path)
         self.__logger.debug('SUCCESS: Initialise Transcribe comparator')
 
+    def __clean_temp_files(self):
+        for tmp_file in self.__tmp_files:
+            os.remove(tmp_file)
+            self.__tmp_files.remove(tmp_file)
+
     def assess_aggression(self, file_path, aggr_threshold, chunk_length, use_local_vad: bool = True):
         # Returns path to chunks with aggression
         res = []
@@ -105,8 +110,14 @@ class AggressionAssessorService:
             voice_fle_name = file_name + '_voice.wav'
             voice_wav_file_path = os.path.join(self.WORK_DIR, voice_fle_name)
 
-            vad_reponse = self.vad.extract_voice(vad_full_path, voice_out_path=voice_wav_file_path)
-            self.__logger.debug(f'Vad CNN response is {vad_reponse}')
+            vad_response = self.vad.extract_voice(vad_full_path, voice_out_path=voice_wav_file_path)
+            self.__logger.debug(f'Vad CNN response is {vad_response}')
+            voiced_samples = [x for x in vad_response if x]
+            if len(voiced_samples) == 0:
+                self.__logger.warning(f'No voiced samples found. Stopping processing')
+                self.__clean_temp_files()
+                return {'chunks': res, 'initial_file_duration': initial_file_duration}
+
             assert os.path.exists(voice_wav_file_path)
 
         # Create chunks of entered length from voice file to asses aggression in them
@@ -140,8 +151,8 @@ class AggressionAssessorService:
 
             if chunk_aggression_level < aggr_threshold:
                 USE_TRANSCRIBE = False
+                self.__tmp_files.append(chunk_path)
                 if USE_TRANSCRIBE:
-                    self.__tmp_files.append(chunk_path)
                     chunk_path_to_transcribe = chunk_path.replace('.wav', '') + '_to_transcribe.mp3'
                     chunk_obj.export(chunk_path_to_transcribe, format='mp3')
                     self.__logger.info(f'TRY: Call transcribe service for file {chunk_path_to_transcribe}')
@@ -161,7 +172,6 @@ class AggressionAssessorService:
                 chunk_end = segm_obj.duration_seconds * 1000
             chunk_iter += 1
 
-        for tmp_file in self.__tmp_files:
-            os.remove(tmp_file)
+        self.__clean_temp_files()
 
         return {'chunks': res, 'initial_file_duration': initial_file_duration}
